@@ -1,0 +1,36 @@
+{
+    "id": "atari2600",
+    "name": "Atari 2600",
+    "build": "26111101",
+    "visible": true,
+    "type": "osd",
+    "order": 21,
+    "eeprom_bank": 255,
+    "rtc_mode": 0,
+    "boards": {
+        "go": {
+            "bitstream": "karabas_go.bin"
+        },
+        "mini": {
+            "bitstream": "karabas_mini.bin"
+        },
+        "minig": {
+            "bitstream": "karabas_minig.bin"
+        }
+    },
+    "osd": [
+        {
+            "type": "FL",
+            "name": "Cartridge",
+            "slot": 0,
+            "extensions": ".a26,.bin",
+            "dir": "/atari2600",
+            "hotkey": "Menu+C"
+        },
+        {
+            "type": "T",
+            "name": "Reset",
+            "hotkey": "Menu+F12"
+        }
+    ]
+}

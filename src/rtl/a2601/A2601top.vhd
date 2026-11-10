@@ -319,7 +319,8 @@ sc_a <= clr_a                                when rst = '1'    else
         "0000" & cpu_a(6 downto 0);
 
 -- ROM and SC output
-process(all)
+-- karabas: VHDL-93 for XST, was process(all)
+process(bss, cpu_a, rom_do, sc, sc_d_out, e7_bank0, DpcFlags, DpcRandom, DpcMusicModes, DpcMusicFlags, soundAmplitudes)
 	variable ampI_v :std_logic_vector(2 downto 0);
 	variable masked0_v :std_logic_vector(7 downto 0);
 	variable masked1_v :std_logic_vector(7 downto 0);

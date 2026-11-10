@@ -17,11 +17,11 @@
 - A2600Nano: F8 F6 FE E0 3F F4 P2 (DPC, Pitfall II) FA CV 2K UA E7 F0 32 + SuperChip. AR / 3E / SB / WD / EF / DPC+ / CDF определяются `detect2600`, но в `A2601top.vhd` у них пустые ветки.
 - k7800: всё перечисленное плюс AR (Supercharger), 3E, SB, WD, EF, FA2, JANE, 0840, FC, DF, MC и др. **ARM-мапперы (DPC+, CDF, ACE — ARM7TDMI на ~70 МГц) не делаем**: как MiSTer, показываем «Out of Order». Define `NO_ARM_MAPPER` убирает только `arm_mapper_subsystem`; `mapper_dpcplus` / `mapper_cdf` / таблицы остаются — вырезать в Ф0.
 
-### Проба XST (xc6slx25-2, `-iobuf NO`, части отдельно)
+### Проба XST (xc6slx25-2, `-iobuf NO`, части отдельно; повторяется `make a2601-xst k7800-parts-xst`)
 
 | Часть | LUT | FF | RAMB16 | Fmax |
 |---|---|---|---|---|
-| A2601top (A2600Nano, вся машина без ПЗУ картриджа) | 2877 (19 %) | 960 | 3 | — |
+| A2601top (A2600Nano, вся машина без ПЗУ картриджа) | 2877 (19 %) | 960 | 3 | 19,3 МГц по худшему пути (A2601 работает на 3,58 и 28 МГц — разобрать при откате) |
 | k7800 `TIA` (sv2v) | 1142 (7 %) | 607 | 0 | 115 МГц |
 | k7800 `mos6502` (sv2v) | 1132 (7 %) | 280 | 0 | 67 МГц |
 | k7800 `M6532` | не собрался: нужен `cache_ram_dp` (`cache_ram.v`) | | | |
