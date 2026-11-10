@@ -1011,7 +1011,7 @@ module mapper_AR
 	spram #(
 		.addr_width(11),
 		.mem_init_file("ar.mif"),
-		.sim_init_file("rtl/ar.hex")
+		.sim_init_file("rtl/k7800/ar.hex") // karabas: path from src/
 	) ar_rom
 	(
 		.clock      (clk),
@@ -1097,7 +1097,7 @@ module mapper_AR
 						state_next <= AR_LOAD_HEADER;
 					end else begin
 						header_a <= 0;
-						header_array[4] <= 8'h55 - header_array.sum();
+						header_array[4] <= 8'h55 - (header_array[0] + header_array[1] + header_array[2] + header_array[3] + header_array[4] + header_array[5] + header_array[6] + header_array[7]); // karabas: .sum() for sv2v
 						state_next <= AR_LOAD_BLOCK_BYTE;
 					end
 					state <= AR_FETCH;

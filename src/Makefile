@@ -2,12 +2,13 @@
 #
 #   make minig           a board: <board>-xst (.ngc), <board>-impl (.bin), <board>-core (.kg)
 #   make minig-report    LUTs, slices, block RAMs and the timing result of the last build
+#   make atari2600-xst   the machine alone (atari2600_top, atari2600.prj from tools/sv2v.sh, -iobuf NO)
 #   make a2601-xst       the fallback machine alone (A2601 of A2600Nano, a2601.prj, -iobuf NO): fit check
 #   make k7800-parts-xst the converted k7800 parts alone (TIA, mos6502; k7800_parts.prj from tools/sv2v.sh)
-#   make <name>-report   utilization from the .syr of a2601 / k7800_TIA / k7800_mos6502
+#   make <name>-report   utilization from the .syr of atari2600 / a2601 / k7800_TIA / k7800_mos6502
 #   make clean           the intermediate files (not the .bin / .kg files, they are in git)
 #
-# Ф0 (docs/PLAN.md) adds the machine top atari2600_top and `make atari2600-xst`, then the board tops.
+# Board tops come in Ф2 (docs/PLAN.md).
 # Inputs per board: karabas_<board>.prj (the source list, the shared modules as "../modules/rtl/..."),
 # karabas_<board>.xst, karabas_<board>.ut, karabas_<board>.ucf. No board has them yet.
 
@@ -36,10 +37,10 @@ PAR = -ol high -xe c -mt 4
 # included or read by the sources, not in the prj
 INCLUDES = $(wildcard ../modules/rtl/mcu/*.vh)
 
-PARTS = a2601 k7800_TIA k7800_mos6502
+PARTS = atari2600 a2601 k7800_TIA k7800_mos6502
 
 .PHONY: all clean $(BOARDS) $(BOARDS:=-xst) $(BOARDS:=-impl) $(BOARDS:=-core) $(BOARDS:=-report) \
-	a2601-xst k7800-parts-xst $(PARTS:=-report)
+	atari2600-xst a2601-xst k7800-parts-xst $(PARTS:=-report)
 
 all: $(BOARDS)
 
@@ -86,10 +87,12 @@ $(1)-report:
 	@grep -E "Minimum period|Xst:737" $(1).syr | sort -u | head
 endef
 
+$(eval $(call part,atari2600,atari2600.prj))
 $(eval $(call part,a2601,a2601.prj))
 $(eval $(call part,k7800_TIA,k7800_parts.prj))
 $(eval $(call part,k7800_mos6502,k7800_parts.prj))
 
+atari2600-xst: atari2600.ngc
 a2601-xst: a2601.ngc
 k7800-parts-xst: k7800_TIA.ngc k7800_mos6502.ngc
 

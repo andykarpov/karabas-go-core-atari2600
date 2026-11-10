@@ -242,12 +242,10 @@ module mos6502_ctl (
 		input reg [24:0] o;
 		reg [75:0] r;
 		reg combo;
-		reg [0:1] _sv2v_jump;
 		begin
 			r = mos6502_pkg_CTL_IDLE;
-			_sv2v_jump = 2'b00;
 			combo = ((o[17-:3] != 3'd0) && (o[14-:5] != 5'd0)) && (o[24-:5] != 5'd1);
-			if (combo) begin
+			if (combo)
 				(* full_case, parallel_case *)
 				case (o[14-:5])
 					5'd1: begin
@@ -288,10 +286,7 @@ module mos6502_ctl (
 					default:
 						;
 				endcase
-				op_a = r;
-				_sv2v_jump = 2'b11;
-			end
-			if (_sv2v_jump == 2'b00) begin
+			else begin
 				(* full_case, parallel_case *)
 				case (o[14-:5])
 					5'd9: begin
@@ -560,9 +555,8 @@ module mos6502_ctl (
 						default:
 							;
 					endcase
-				op_a = r;
-				_sv2v_jump = 2'b11;
 			end
+			op_a = r;
 		end
 	endfunction
 	function automatic [75:0] op_b;
