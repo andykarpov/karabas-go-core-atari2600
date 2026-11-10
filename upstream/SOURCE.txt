@@ -1,0 +1,14 @@
+https://github.com/MiSTer-devel/Atari7800_MiSTer (k7800, Jamie Blanks, MIT)
+commit 0dc8ad2e3ff724af57ba84c913e035a4c97733e8 2026-09-11
+
+src/rtl/k7800/: rtl/ of that commit without the Quartus parts (pll/, pll.v, *.qip). The 2600 part: TIA.sv,
+6502/, RIOT/, cart2600.sv, banks2600.sv, detect2600.sv, paddles.sv, mapper_*.sv; the rest (Maria, Pokey,
+jt51, Minnie, SN76489, arm7tdmi, bupchip ...) is the 7800 side, kept for a possible 7800 mode (variant C).
+upstream/k7800/: the MiSTer top (Atari7800.sv), README, LICENSE, Palette/: a reference, not built.
+
+https://github.com/MiSTle-Dev/A2600Nano (A2601 of Retromaster as ported by MiSTer / MiSTle-Dev, GPL v3)
+commit fbc50ec46b75e86e79df7e8846025a616446abd5 2026-05-07
+
+src/rtl/a2601/: the machine of src/ of that commit (A2601top, A2601Core, A6507, A6532, dac, TIA/, t65/,
+detect2600.sv, video_stabilize.sv): the fallback (variant A) and a reference in simulation.
+upstream/a2600nano/: the Tang Nano 20K top, README, LICENSE: a reference for the glue, not built.

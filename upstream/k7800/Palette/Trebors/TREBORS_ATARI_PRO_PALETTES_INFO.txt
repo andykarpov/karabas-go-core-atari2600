@@ -1,0 +1,27 @@
+TREBORS_ATARI_PRO_PALETTES:
+
+\\(1) Region\(2) Set Name\(3) Palette Temperature
+
+(1) NTSC | PAL
+(2) UNCALIBRATED | CALIBRATED | MODIFIED | SUPER | GAMMASAT1 | GAMMASAT2 | GAMMASAT3 | LUM1 | LUM2 | LUM3
+(3) COOL | WARM  | HOT 
+
+UNCALIBRATED = Raw luminance values.
+
+CALIBRATED = Luminance calibrated per official utility and diagnostic tools.
+
+MODIFIED = Modified luminance for modern displays, accounts for some picture processing features.
+
+SUPER = Superior luminance and saturation.
+
+GAMMASAT1 = Increased luminance base, retain calibration, default saturation.
+
+GAMMASAT2 = Increased luminance base, retain calibration, substantial saturation increase.
+
+GAMMASAT3 = Increased luminance base, retain calibration, proportionally increased saturation.
+
+LUM1 = Minimal luminance range without darkest hues appearing black.
+
+LUM2 = Lowered luminance range containing decreased luminance values.
+
+LUM3 = Widest luminance range and max luminance values while avoiding washout.
