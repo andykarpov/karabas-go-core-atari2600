@@ -325,8 +325,8 @@ module mos6502_ctl
 			D_CMP: begin r.ac_sb=1; r.sb_add=1; r.sums=1; r.alucin=1; end
 			default: ;
 			endcase
-			return r;
-		end
+			// karabas: no early return here (sv2v turns it into _sv2v_jump, XST then drops op_a)
+		end else begin
 
 		unique case (o.data)
 		D_LDA: begin r.dl_db=1; r.sb_db=1; r.sb_ac=1; r.db7_n=1; r.dbz_z=1; end
@@ -425,6 +425,7 @@ module mos6502_ctl
 			default: ;
 			endcase
 		end
+		end // karabas: else of combo
 		return r;
 	endfunction
 
