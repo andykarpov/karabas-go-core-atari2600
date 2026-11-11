@@ -443,7 +443,7 @@ module cart2600_kg (
 		.ram_rw(ram_rw[6'd14]),
 		.ram_a(ram_a[6'd14]),
 		.rom_a(rom_addr[6'd14]),
-		.cold_reset(mapper != 6'd14)
+		.cold_reset((mapper != 6'd14) || load_start)
 	);
 	mapper_AR mapper_AR(
 		.clk(clk),

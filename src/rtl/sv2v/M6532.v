@@ -86,6 +86,7 @@ module M6532 (
 	wire p1024 = ~|prescaler[9:0] && (incr == 2'd3);
 	wire tick_inc = ((p1 || p8) || p64) || p1024;
 	wire timer_wrap = tick_inc && (timer == 0);
+	wire timer_write = ((((CS1 & ~CS2_n) && RS_n) && addr[2]) && addr[4]) && ~RW_n;
 	wire pa7_edge = ((edge_detect && ~old_pa7) && pa7) || ((~edge_detect && old_pa7) && ~pa7);
 	wire drive = ((res_n && (CS1 & ~CS2_n)) && RW_n) && ce;
 	assign oe = {8 {drive}};
@@ -168,7 +169,7 @@ module M6532 (
 				else
 					interrupt[6] <= 0;
 			end
-			if (timer_wrap) begin
+			if (timer_wrap && !timer_write) begin
 				interrupt[7] <= 1;
 				rollover <= 1;
 			end

@@ -124,6 +124,7 @@ wire tick_inc = p1 || p8 || p64 || p1024;
 // is read out one ahead below. Named here so the read and the flag itself
 // cannot drift apart.
 wire timer_wrap = tick_inc && timer == 0;
+wire timer_write = (CS1 & ~CS2_n) && RS_n && addr[2] && addr[4] && ~RW_n; // karabas: see the wrap below
 wire pa7_edge = (edge_detect && ~old_pa7 && pa7) || (~edge_detect && old_pa7 && ~pa7);
 
 // RES turns the data bus off, and the part drives it only through phase 2 of a
@@ -240,7 +241,10 @@ always_ff @(posedge clk) begin
 			end
 		end
 
-		if (timer_wrap) begin
+		// karabas: a timer write on the cycle the counter wraps keeps the written state (flag
+		// clear, no rollover): the wrap used to win and the timer then ran at /1 until the next
+		// INTIM read, e.g. TIM64T = 43 counted as 40.
+		if (timer_wrap && !timer_write) begin
 			interrupt[7] <= 1;
 			rollover <= 1;
 		end
