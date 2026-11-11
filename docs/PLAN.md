@@ -86,6 +86,7 @@ A2601top: единственная конструкция VHDL-2008 — `process
 - OSD: `kg_osd_overlay` 512 × 416 (шаг 2 / 2), смещения 276 / 105 (как macplus); звук HDMI 48 кГц: +48 по модулю 65000.
 - Управление (`a2600_hid.v`): пады (левый = P0, правый = P1), клавиатура — стрелки + Space / Left Ctrl (P0), F1 Select, F2 Game Reset, у пада Start = Game Reset, Mode / X = Select; F12 — сброс машины. OSD: Cartridge, Reset, TV Type (Color / B&W), Left / Right Difficulty (B / A).
 - Симуляция платы без обвязки: `src/sim/run_board.sh` (`a2600_core` + модель асинхронной SRAM, клоки 2 : 1, загрузка как ROMLOADER или `--file`, кадр 1024 × 768): Legendary Spear, F8SC / FA / E7 / 3E (RAM картриджа через SRAM) — верно.
+- Плата (Mini G, 2026-11-11, сборка 26111101): 1024 × 768 принят, Legendary Spear с `.kg` при старте, клавиатура (стрелки, Space, F2, F12 — сброс), звук HDMI, OSD по центру; FL: gamebub F8SC / E7 / 3E — PASS, Refhraktor (F6) грузится. TV Type B&W на Legendary Spear не видно (игра не читает переключатель; проверить на другой игре).
 
 ## Архитектура
 
