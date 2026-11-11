@@ -7,6 +7,12 @@
     "order": 21,
     "eeprom_bank": 255,
     "rtc_mode": 0,
+    "roms": [
+        {
+            "filename": "roms/legendary_spear.bin",
+            "address": 0
+        }
+    ],
     "boards": {
         "go": {
             "bitstream": "karabas_go.bin"
@@ -30,7 +36,44 @@
         {
             "type": "T",
             "name": "Reset",
-            "hotkey": "Menu+F12"
+            "hotkey": "F12",
+            "index": 1
+        },
+        {
+            "type": "-"
+        },
+        {
+            "type": "S",
+            "name": "TV Type",
+            "options": [
+                "Color",
+                "B&W"
+            ],
+            "default": 0,
+            "hotkey": "Menu+T",
+            "index": 2
+        },
+        {
+            "type": "S",
+            "name": "Left Diff",
+            "options": [
+                "B",
+                "A"
+            ],
+            "default": 0,
+            "hotkey": "Menu+L",
+            "index": 3
+        },
+        {
+            "type": "S",
+            "name": "Right Diff",
+            "options": [
+                "B",
+                "A"
+            ],
+            "default": 0,
+            "hotkey": "Menu+R",
+            "index": 4
         }
     ]
 }

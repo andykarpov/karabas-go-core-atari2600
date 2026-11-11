@@ -1,3 +1,5 @@
+`timescale 1ns / 1ps
+`default_nettype wire
 // Atari 2600 VCS machine: 6507 (sally), TIA, RIOT (M6532), cartridge mappers (cart2600_kg) and the
 // mapper autodetect (detect2600) of k7800 (Atari7800_MiSTer, Jamie Blanks, MIT), wired as the 2600
 // path of its rtl/top.sv: no MARIA, no BIOS, no ARM mappers; the TIA is the only phase source.
