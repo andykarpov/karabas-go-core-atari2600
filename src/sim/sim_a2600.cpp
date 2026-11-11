@@ -1,7 +1,8 @@
 // sim_a2600.cpp - verilator harness of atari2600_top (Ф1): the machine on C++ memory models.
 //
 //   sim_a2600 CART [--frames N] [--div N] [--jitter] [--mapper N] [--pal] [--ppm PREFIX]
-//             [--every N] [--expect-lines N] [--expect-frames N] [--expect-colour HEX] [--expect-mapper N]
+//             [--every N] [--expect-lines N] [--expect-frames N] [--expect-colour HEX] [--expect-mapper N] [--sample-line N]
+//             [--reset-at FRAME]...
 //             [--joy HEX] [--swb HEX] [--trace-vb] [--trace-riot FRAME] [--quiet]
 //
 // CART: the image (.a26 / .bin), fed through the load stream (detect2600) while the machine is
@@ -12,8 +13,10 @@
 // frames (VSYNC rising edges), default 10. --ppm: write every N-th frame (--every, default 1) as
 // PREFIX_NNNN.ppm, 228 colour clocks x the lines (blank areas dark grey, the NTSC palette of
 // k7800). --expect-*: exit 1 unless the frames after the first two have N lines, at least N
-// frames came, the background pixel (2 clocks into the visible part) of the middle line of the
+// frames came, the background pixel (2 clocks into the visible part) of the middle line (or of
+// --sample-line N, counted from VSYNC) of the
 // last frame has palette index HEX ({col, lum}), the mapper in use is N.
+// --reset-at: a console reset (1000 clocks) when that frame starts; may be repeated.
 // --joy: RIOT port A (default FF), --swb: port B (console switches, default FF). --trace-vb:
 // print the line / colour clock of every VBLANK change. --trace-riot: the RIOT timer accesses of
 // that frame (bus, timer state), only in the DEBUG=1 build of run_sim.sh.
@@ -45,6 +48,8 @@ static std::string ppm_prefix;
 static int ppm_every = 1;
 static int last_centre = -1;
 static int trace_riot = -1;     // frame to trace the RIOT accesses of
+static int sample_line = -1;    // the line of the colour check, -1 = the middle line
+static std::vector<int> reset_at; // frames at which a console reset (F12) is pulsed
 
 static void load_palette(void) {
 	FILE *f = fopen("rtl/k7800/palettes/NWARM.hex", "r");
@@ -84,7 +89,7 @@ static void video_tick(void) {
 	if (vs && !old_vs) {           // a new frame
 		if (frames > 0) {
 			lines_per_frame.push_back(line_y);
-			int cy = line_y / 2;
+			int cy = sample_line >= 0 ? sample_line : line_y / 2;
 			if (cy < H) {          // the background left of the playfield: 2 clocks into the line
 				int x = 0;
 				while (x < W && fb[cy][x] == 0xFF) x++;
@@ -126,6 +131,8 @@ int main(int argc, char **argv) {
 		else if (a == "--expect-frames") expect_frames = atoi(next());
 		else if (a == "--expect-colour") expect_colour = strtol(next(), nullptr, 16);
 		else if (a == "--expect-mapper") expect_mapper = atoi(next());
+		else if (a == "--sample-line") sample_line = atoi(next());
+		else if (a == "--reset-at") reset_at.push_back(atoi(next()));
 		else if (a == "--joy") joy = strtol(next(), nullptr, 16);
 		else if (a == "--swb") swb = strtol(next(), nullptr, 16);
 		else if (a == "--quiet") quiet = true;
@@ -164,8 +171,8 @@ int main(int argc, char **argv) {
 	uint64_t tick = 0;
 	int ce_cnt = 0, ce_dist = div, jit = 0;
 	size_t load_pos = 0;
-	int load_phase = 0;            // 0 start pulse, 1 bytes, 2 end pulse, 3 hold reset, 4 run
-	int hold = 0;
+	int load_phase = 0;            // 0 reset then the start pulse, 1 bytes, 2 end pulse, 3 hold reset, 4 run
+	int hold = 0, reset_ticks = 0;
 	uint64_t cycles_run = 0;
 	const uint64_t limit = (uint64_t)(max_frames + 2) * 262 * 228 * 2 * (div + 1) * 2 + 2000000;
 
@@ -173,7 +180,7 @@ int main(int argc, char **argv) {
 		// inputs for this cycle
 		tb->load_start = 0; tb->load_valid = 0; tb->load_end = 0;
 		switch (load_phase) {
-		case 0: tb->load_start = 1; load_phase = 1; break;
+		case 0: if (tick >= 16) { tb->load_start = 1; load_phase = 1; } break;   // reset first, as on the board
 		case 1:
 			if ((tick & 3) == 0) {
 				tb->load_addr = load_pos;
@@ -184,6 +191,11 @@ int main(int argc, char **argv) {
 			break;
 		case 2: tb->load_end = 1; load_phase = 3; break;
 		case 3: if (++hold == 64) { tb->reset = 0; load_phase = 4; } break;
+		case 4:                    // running: --reset-at pulses the reset for 1000 clocks
+			for (size_t k = 0; k < reset_at.size(); k++)
+				if (reset_at[k] == frames) { reset_at[k] = -1; tb->reset = 1; reset_ticks = 1000; }
+			if (reset_ticks && --reset_ticks == 0) tb->reset = 0;
+			break;
 		default: break;
 		}
 		bool ce = false;

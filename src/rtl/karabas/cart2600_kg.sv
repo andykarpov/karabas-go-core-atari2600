@@ -529,7 +529,7 @@ module cart2600_kg
 		.ram_rw     (ram_rw[BANK32]),
 		.ram_a      (ram_a[BANK32]),
 		.rom_a      (rom_addr[BANK32]),
-		.cold_reset (mapper != BANK32)
+		.cold_reset (mapper != BANK32 || load_start) // karabas: game 0 after every load (as gamebub-2600)
 	);
 
 	mapper_AR mapper_AR
