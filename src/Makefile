@@ -8,9 +8,9 @@
 #   make <name>-report   utilization from the .syr of atari2600 / a2601 / k7800_TIA / k7800_mos6502
 #   make clean           the intermediate files (not the .bin / .kg files, they are in git)
 #
-# Board tops come in Ф2 (docs/PLAN.md).
 # Inputs per board: karabas_<board>.prj (the source list, the shared modules as "../modules/rtl/..."),
-# karabas_<board>.xst, karabas_<board>.ut, karabas_<board>.ucf. No board has them yet.
+# karabas_<board>.xst, karabas_<board>.ut, karabas_<board>.ucf. The Mini and Go tops and the timing part
+# of their ucf are made from the Mini G ones by tools/mktops.py (run it after a change of those).
 
 ISE_SETTINGS ?= /opt/Xilinx/14.7/ISE_DS/settings64.sh
 PART = xc6slx25-ftg256-2

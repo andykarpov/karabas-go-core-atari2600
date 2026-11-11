@@ -1,7 +1,7 @@
 {
     "id": "atari2600",
     "name": "Atari 2600",
-    "build": "26111102",
+    "build": "26111103",
     "visible": true,
     "type": "osd",
     "order": 21,
