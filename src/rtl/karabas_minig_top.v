@@ -17,12 +17,14 @@
  Video: the TIA picture into the frame buffer (a2600_fb, 160 x 240), out as 1024 x 768 (x6 / x3,
  960 x 720 in the middle) with the OSD. Audio: the TIA mix (k7800 table) to the PCM5102 and HDMI.
 
- Controllers (a2600_hid): USB pads (left = P0, right = P1), the keyboard arrows + Space / Left Ctrl
- (P0), F1 Select, F2 Game Reset, F12 reset of the machine.
+ Controllers (a2600_hid, a2600_paddles): USB pads (left = P0, right = P1; B / C = Fire 2 / 3, the
+ Booster Grip), the keyboard arrows + Space / Left Ctrl (P0, Left Alt = Fire 2), F1 Select, F2 Game
+ Reset, F12 reset of the machine; paddles (Controller item): the mouse and the pads.
 
  Soft switches (the index of the item in the osd of core.json, file items included):
    0 Cartridge (FL 0)   1 Reset   2 TV Type (0 Color, 1 B&W)   3 Left Difficulty (0 B, 1 A)
-   4 Right Difficulty (0 B, 1 A)
+   4 Right Difficulty (0 B, 1 A)   5 Mapper (0 Auto, 1.. see a2600_core)
+   6 Region (0 Auto, 1 NTSC, 2 PAL, 3 SECAM)   7 Controller (0 Joystick, 1 Paddles)
 */
 
 module karabas_minig_top (
@@ -188,6 +190,9 @@ wire [7:0] rom_data;
 wire file_active, file_wr;
 wire [7:0] file_slot, file_data;
 wire [31:0] file_addr;
+wire [7:0] ms_x;
+wire [2:0] ms_b;
+wire ms_upd;
 wire [15:0] softsw_command, osd_command;
 wire mcu_busy;
 wire dvi_only;
@@ -234,11 +239,11 @@ kg_mcu #(
 	.KB_SCANCODE_UPD(),
 	.JOY_L(joy_l),
 	.JOY_R(joy_r),
-	.MS_X(),
+	.MS_X(ms_x),
 	.MS_Y(),
 	.MS_Z(),
-	.MS_B(),
-	.MS_UPD(),
+	.MS_B(ms_b),
+	.MS_UPD(ms_upd),
 
 	.ROMLOADER_ACTIVE(rom_active),
 	.ROMLOAD_ADDR(rom_addr),
@@ -322,8 +327,8 @@ assign SD_CLK = mcu_sck_ibufg;
 
 // ------------------------------------------------------------------ soft switches
 
-wire [5*8-1:0] sw;
-kg_soft_switches #(.N(5)) soft_switches (
+wire [8*8-1:0] sw;
+kg_soft_switches #(.N(8)) soft_switches (
 	.clk(clk_sys),
 	.command(softsw_command),
 	.regs(sw),
@@ -333,6 +338,9 @@ wire sw_reset = sw[1*8];
 wire sw_bw = sw[2*8];
 wire sw_diff_l = sw[3*8];
 wire sw_diff_r = sw[4*8];
+wire [3:0] sw_mapper = sw[5*8 +: 4];
+wire [1:0] sw_region = sw[6*8 +: 2];
+wire sw_paddles = sw[7*8];
 
 // ------------------------------------------------------------------ the core (a2600_core)
 
@@ -361,6 +369,12 @@ a2600_core core (
 	.sw_bw(sw_bw),
 	.sw_diff_l(sw_diff_l),
 	.sw_diff_r(sw_diff_r),
+	.sw_mapper(sw_mapper),
+	.sw_region(sw_region),
+	.sw_paddles(sw_paddles),
+	.ms_x(ms_x),
+	.ms_b(ms_b),
+	.ms_upd(ms_upd),
 	.kb_status(kb_status),
 	.kb_dat0(kb_dat0),
 	.kb_dat1(kb_dat1),

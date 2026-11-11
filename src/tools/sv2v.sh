@@ -10,8 +10,8 @@ SV2V=${SV2V:-/opt/sv2v/sv2v}
 SRC="k7800/detect2600.sv k7800/6502/mos6502_pkg.sv k7800/6502/mos6502_alu.sv k7800/6502/mos6502_decode.sv
  k7800/6502/mos6502_dp.sv k7800/6502/mos6502_ctl.sv k7800/6502/mos6502.sv k7800/6502/sally.sv
  k7800/TIA.sv k7800/RIOT/M6532.sv k7800/banks2600.sv k7800/mapper_fa2.sv karabas/cart2600_kg.sv
- k7800/bram.v k7800/cache_ram.v"
-TOPS="--top=sally --top=TIA --top=M6532 --top=detect2600 --top=cart2600_kg"
+ k7800/paddles.sv k7800/bram.v k7800/cache_ram.v"
+TOPS="--top=sally --top=TIA --top=M6532 --top=detect2600 --top=cart2600_kg --top=paddle_timer"
 rm -rf sv2v && mkdir sv2v
 $SV2V $TOPS $SRC -w sv2v 2>&1 | grep -v -E '^\s*$|Warning: Number literal|^ *[0-9]* \||^\s*\|' || true
 ls sv2v | wc -l

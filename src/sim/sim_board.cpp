@@ -10,7 +10,9 @@
 // frames (vsync of the 1024 x 768 output) to run, default 6. --ppm: every output frame from the 3rd as
 // PREFIX_NNNN.ppm (1024 x 768). --at X,Y: the output pixel to check (default 512,174: the status band
 // of the gamebub tests); --expect-colour: its palette index (as sim_a2600: {col, lum}) -> exit 1 if not.
-// --joy: kg_mcu JOY_L bits (hex), e.g. 40 = A (fire).
+// --joy: kg_mcu JOY_L bits (hex), e.g. 40 = A (fire). --mapper N / --region N / --paddles: the OSD
+// items Mapper (index of its options), Region (0 Auto, 1 NTSC, 2 PAL, 3 SECAM), Controller = Paddles.
+// --mouse DX: one mouse report of X move DX (-128..127) after the load (paddle A from 128).
 
 #include <cstdio>
 #include <cstdlib>
@@ -80,7 +82,8 @@ int main(int argc, char **argv) {
 	const char *cart = nullptr;
 	bool as_file = false;
 	int max_frames = 6, at_x = 512, at_y = 174, expect = -1;
-	unsigned joy = 0;
+	unsigned joy = 0, mapper = 0, region = 0, paddles = 0;
+	int mouse_dx = 0;
 	std::string ppm;
 	for (int i = 1; i < argc; i++) {
 		std::string a = argv[i];
@@ -91,6 +94,10 @@ int main(int argc, char **argv) {
 		else if (a == "--at") { if (sscanf(next(), "%d,%d", &at_x, &at_y) != 2) return 2; }
 		else if (a == "--expect-colour") expect = strtol(next(), nullptr, 16);
 		else if (a == "--joy") joy = strtol(next(), nullptr, 16);
+		else if (a == "--mapper") mapper = atoi(next());
+		else if (a == "--region") region = atoi(next());
+		else if (a == "--paddles") paddles = 1;
+		else if (a == "--mouse") mouse_dx = atoi(next());
 		else if (a[0] != '-' && !cart) cart = argv[i];
 		else if (a[0] != '+') { fprintf(stderr, "unknown %s\n", a.c_str()); return 2; }
 	}
@@ -114,6 +121,8 @@ int main(int argc, char **argv) {
 	tb->joy_l = joy;
 	tb->joy_r = 0;
 	tb->sw_reset = 0; tb->sw_bw = 0; tb->sw_diff_l = 0; tb->sw_diff_r = 0;
+	tb->sw_mapper = mapper; tb->sw_region = region; tb->sw_paddles = paddles;
+	tb->ms_x = 0; tb->ms_b = 0; tb->ms_upd = 0;
 	tb->rom_active = 0; tb->file_active = 0; tb->rom_wr = 0; tb->file_wr = 0; tb->file_slot = 0;
 
 	uint64_t sys = 0;
@@ -145,6 +154,8 @@ int main(int argc, char **argv) {
 						pos++;
 					} else {
 						tb->rom_active = 0; tb->file_active = 0;
+						tb->ms_x = (uint8_t)mouse_dx;
+						if (mouse_dx) tb->ms_upd = 1;
 						phase = 3;
 						printf("loaded %zu bytes at clk_sys %llu\n", rom.size(), (unsigned long long)sys);
 					}
@@ -175,8 +186,8 @@ int main(int argc, char **argv) {
 	uint32_t c = frame[at_y * OW + at_x];
 	int idx = -1;
 	for (int i = 0; i < 256; i += 2) if (pal[i] == c) { idx = i >> 1; break; }
-	printf("%s: %zu bytes, mapper %d, cart_ok %d, cart_size %u, %d output frames, %llu clk_sys\n", cart, rom.size(),
-		tb->mapper, tb->cart_ok, tb->cart_size, oframes, (unsigned long long)sys);
+	printf("%s: %zu bytes, mapper %d, pal %d, cart_ok %d, cart_size %u, %d output frames, %llu clk_sys\n", cart, rom.size(),
+		tb->mapper, tb->is_pal, tb->cart_ok, tb->cart_size, oframes, (unsigned long long)sys);
 	printf("pixel %d,%d: %06x (palette index %02x)\n", at_x, at_y, c, idx);
 	int rc = 0;
 	if (expect >= 0) {
