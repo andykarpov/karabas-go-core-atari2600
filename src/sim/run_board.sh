@@ -8,7 +8,7 @@ HERE=$PWD
 SRC=..
 mkdir -p build
 PRJ="$(sed -n 's/^verilog work "\(.*\)"/\1/p' $SRC/atari2600.prj) rtl/karabas/a2600_ce.v rtl/karabas/a2600_sram.v
- rtl/karabas/a2600_hid.v rtl/karabas/a2600_fb.v rtl/karabas/a2600_core.v"
+ rtl/karabas/a2600_hid.v rtl/karabas/a2600_paddles.v rtl/karabas/a2600_fb.v rtl/karabas/a2600_core.v"
 BIN=build/obj_board/Va2600_core
 if [ ! -x $BIN ] || [ -n "$(cd $SRC && find $PRJ sim/sim_board.cpp sim/run_board.sh -newer sim/$BIN 2>/dev/null)" ]; then
 	echo "JOB-STAGE: build"

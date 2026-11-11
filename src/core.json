@@ -1,7 +1,7 @@
 {
     "id": "atari2600",
     "name": "Atari 2600",
-    "build": "26111101",
+    "build": "26111102",
     "visible": true,
     "type": "osd",
     "order": 21,
@@ -74,6 +74,56 @@
             "default": 0,
             "hotkey": "Menu+R",
             "index": 4
+        },
+        {
+            "type": "-"
+        },
+        {
+            "type": "S",
+            "name": "Mapper",
+            "options": [
+                "Auto",
+                "FE",
+                "CTY",
+                "MC 2K",
+                "MC 4K",
+                "MC 8K",
+                "32-in-1",
+                "E0",
+                "E7",
+                "3E",
+                "3F",
+                "UA",
+                "0840",
+                "SB",
+                "WD",
+                "F0"
+            ],
+            "default": 0,
+            "index": 5
+        },
+        {
+            "type": "S",
+            "name": "Region",
+            "options": [
+                "Auto",
+                "NTSC",
+                "PAL",
+                "SECAM"
+            ],
+            "default": 0,
+            "index": 6
+        },
+        {
+            "type": "S",
+            "name": "Controller",
+            "options": [
+                "Joystick",
+                "Paddles"
+            ],
+            "default": 0,
+            "hotkey": "Menu+P",
+            "index": 7
         }
     ]
 }

@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # Our own test cartridges for the Ф1 simulation (no assembler needed: a few opcodes with labels).
-#   mkrom.py OUT.a26 [bars|timer|f8]
+#   mkrom.py OUT.a26 [bars|timer|f8|paddle]
 # bars : 4K, a standard NTSC frame (3 VSYNC, 37 VBLANK, 192 visible, 30 overscan); the visible
 #        lines get COLUBK = frame counter + 2 * line (ADC: the ALU path), the playfield PF1 = $AA
 #        in COLUPF $0E (TIA objects), the frame counter lives in RIOT RAM $80.
@@ -9,6 +9,9 @@
 #        43 -> 2688 cycles (+ WSYNC: VBLANK 36 lines after VSYNC), 35 -> 2176 (29 lines): 261 lines.
 # f8   : 8K F8 (hotspots $1FF8 / $1FF9): starts in bank 1, the kernel is in bank 0, each frame goes
 #        through both hotspots; the visible lines are all colour $40 if the switching works.
+# paddle: 4K, the paddle A (INPT0) as a picture: the dump transistor is on (VBLANK D7) from the
+#        overscan to the end of VBLANK, off over the 192 visible lines, which read INPT0 each:
+#        black until the capacitor is charged, white ($0E) after. The first white line = the paddle.
 import sys
 
 OP = {  # mnemonic, mode -> opcode
@@ -17,7 +20,7 @@ OP = {  # mnemonic, mode -> opcode
 	('lda', '#'): 0xA9, ('ldx', '#'): 0xA2, ('ldy', '#'): 0xA0, ('adc', '#'): 0x69,
 	('sta', 'zp'): 0x85, ('stx', 'zp'): 0x86, ('lda', 'zp'): 0xA5, ('inc', 'zp'): 0xE6,
 	('sta', 'abs'): 0x8D, ('lda', 'abs'): 0xAD, ('bit', 'abs'): 0x2C, ('jmp', 'abs'): 0x4C,
-	('bne', 'rel'): 0xD0, ('bpl', 'rel'): 0x10, ('beq', 'rel'): 0xF0,
+	('bit', 'zp'): 0x24, ('bne', 'rel'): 0xD0, ('bpl', 'rel'): 0x10, ('beq', 'rel'): 0xF0,
 }
 VSYNC, VBLANK, WSYNC, COLUPF, COLUBK, CTRLPF, PF1 = 0x00, 0x01, 0x02, 0x08, 0x09, 0x0A, 0x0E
 INTIM, TIM64T = 0x284, 0x296
@@ -172,8 +175,40 @@ def main():
 			a('nop'); a('nop'); a('nop')
 			a('jmp', 'abs', 'frame')
 		rom = bank4k(b0) + bank4k(b1)
+	elif kind == 'paddle':
+		def body(a):
+			init(a)
+			a('lda', '#', 0)
+			a('sta', 'zp', PF1)
+			a.label('frame')
+			a('lda', '#', 0x82)          # VBLANK + dump on
+			a('sta', 'zp', VBLANK)
+			a('sta', 'zp', VSYNC)
+			for _ in range(3):
+				a('sta', 'zp', WSYNC)
+			a('lda', '#', 0)
+			a('sta', 'zp', VSYNC)
+			wsync_loop(a, 37, 'vb')
+			a('lda', '#', 0)             # picture, dump off: the capacitor charges
+			a('sta', 'zp', VBLANK)
+			a('ldx', '#', 192)
+			a.label('kern')
+			a('sta', 'zp', WSYNC)
+			a('lda', '#', 0)
+			a('bit', 'zp', 0x08)         # INPT0 D7 = charged
+			a('bpl', 'rel', 'dark')
+			a('lda', '#', 0x0E)
+			a.label('dark')
+			a('sta', 'zp', COLUBK)
+			a('dex')
+			a('bne', 'rel', 'kern')
+			a('lda', '#', 0x82)
+			a('sta', 'zp', VBLANK)
+			wsync_loop(a, 30, 'os')
+			a('jmp', 'abs', 'frame')
+		rom = bank4k(body)
 	else:
-		sys.exit('kind: bars | timer | f8')
+		sys.exit('kind: bars | timer | f8 | paddle')
 	open(out, 'wb').write(rom)
 
 

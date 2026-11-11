@@ -9,18 +9,20 @@
  Capture (clk_sys, one pixel per video_ce = one colour clock): x counts colour clocks from the rising
  hsync, y lines from the rising vsync (as sim/sim_a2600.cpp). The window is 160 x 240: x X0..X0+159
  (the visible part of a line starts 50 colour clocks after the hsync rise), y Y0..Y0+239 (NTSC games
- show lines 40..231: Y0 16 puts them in the middle). A pixel is {0, col, lum}, 0 (black) while blanked.
+ show lines 40..231: Y0 16 puts them in the middle; PAL / SECAM games lines 48..276: Y0_PAL 42). A pixel is {0, col, lum}, 0 (black) while blanked.
  Memory: 5 banks of 8K x 8 (20 RAMB16), address y * 160 + x (38400 bytes).
 
  Output (clk_pix): the 160 x 240 picture x6 / x3 = 960 x 720 in the middle of 1024 x 768 (32 black
- columns each side, 24 lines above and below), the NWARM palette of k7800 (256 entries, index {col, lum, 0}). One buffer: the
+ columns each side, 24 lines above and below), the NWARM / PWARM palettes of k7800 (256 entries, index
+ {col, lum, 0}) or SECAM (8 colours by lum, as Stella). One buffer: the
  output reads while the machine writes, at 59.92 against 60.004 Hz a seam can cross a moving picture slowly.
  Pipeline: address (clock 0), memory (1), bank mux / palette address (2), palette (3): the syncs and de
  are delayed by 3 clocks.
 */
 module a2600_fb #(
 	parameter [7:0] X0 = 8'd50,
-	parameter [8:0] Y0 = 9'd16
+	parameter [8:0] Y0 = 9'd16,
+	parameter [8:0] Y0_PAL = 9'd42
 ) (
 	input wire clk_sys,
 	input wire video_ce,
@@ -29,6 +31,8 @@ module a2600_fb #(
 	input wire hsync_i,
 	input wire vsync_i,
 	input wire blank_i,
+	input wire pal,        // clk_sys: the PAL palette and window
+	input wire secam,      // clk_sys: the SECAM palette (with pal)
 
 	input wire clk_pix,
 	output reg [23:0] rgb = 24'd0,
@@ -53,7 +57,8 @@ wire hs_rise = hsync_i && !old_hs;
 wire vs_rise = vsync_i && !old_vs;
 wire [7:0] x_now = hs_rise ? 8'd0 : cx;
 wire [8:0] y_now = vs_rise ? 9'd0 : hs_rise ? (cy == 9'h1FF ? cy : cy + 9'd1) : cy;
-wire [15:0] base_now = (vs_rise || y_now <= Y0) ? 16'd0 : hs_rise ? line_base + 16'd160 : line_base;
+wire [8:0] y0 = pal ? Y0_PAL : Y0;
+wire [15:0] base_now = (vs_rise || y_now <= y0) ? 16'd0 : hs_rise ? line_base + 16'd160 : line_base;
 
 always @(posedge clk_sys) begin
 	we <= 1'b0;
@@ -63,7 +68,7 @@ always @(posedge clk_sys) begin
 		cx <= (x_now == 8'hFF) ? x_now : x_now + 8'd1;
 		cy <= y_now;
 		line_base <= base_now;
-		if (x_now >= X0 && x_now < X0 + 8'd160 && y_now >= Y0 && y_now < Y0 + 9'd240) begin
+		if (x_now >= X0 && x_now < X0 + 8'd160 && y_now >= y0 && y_now < y0 + 9'd240) begin
 			we <= 1'b1;
 			wa <= base_now + {8'd0, x_now - X0};
 			wd <= blank_i ? 8'd0 : {1'b0, col, lum};
@@ -95,11 +100,35 @@ always @(posedge clk_pix) begin
 	q4 <= bank4[ra[12:0]];
 end
 
-// ---------------------------------------------------------------- palette (k7800 NWARM)
+// ---------------------------------------------------------------- palettes (k7800 NWARM / PWARM, SECAM)
 
 // in LUTs: a 256 x 24 ROM would be a RAMB8BWER, whose initial data bitgen warns about (AR 39999)
 (* ram_style = "distributed" *) reg [23:0] palette [0:255];
 initial $readmemh("rtl/k7800/palettes/NWARM.hex", palette);
+(* ram_style = "distributed" *) reg [23:0] palette_pal [0:255];
+initial $readmemh("rtl/k7800/palettes/PWARM.hex", palette_pal);
+
+// SECAM: the colour of a pixel is its lum alone (the palette of Stella)
+function [23:0] secam_rgb;
+	input [2:0] l;
+	case (l)
+		3'd0: secam_rgb = 24'h000000;
+		3'd1: secam_rgb = 24'h2121FF;
+		3'd2: secam_rgb = 24'hF03C79;
+		3'd3: secam_rgb = 24'hFF50FF;
+		3'd4: secam_rgb = 24'h7FFF00;
+		3'd5: secam_rgb = 24'h7FFFFF;
+		3'd6: secam_rgb = 24'hFFFF3F;
+		default: secam_rgb = 24'hFFFFFF;
+	endcase
+endfunction
+
+// the region of clk_sys into clk_pix (it changes with an OSD item or the detection of the TIA)
+reg [1:0] pal_s = 2'b00, secam_s = 2'b00;
+always @(posedge clk_pix) begin
+	pal_s <= {pal_s[0], pal};
+	secam_s <= {secam_s[0], secam};
+end
 
 // ---------------------------------------------------------------- output timing (clk_pix)
 
@@ -167,7 +196,7 @@ always @(posedge clk_pix) begin
 		default: pidx <= {q4[6:0], 1'b0};
 	endcase
 	// clock 3: the colour
-	rgb <= pic_2 ? palette[pidx] : 24'd0;
+	rgb <= !pic_2 ? 24'd0 : secam_s[1] ? secam_rgb(pidx[3:1]) : pal_s[1] ? palette_pal[pidx] : palette[pidx];
 
 	hs_d <= {hs_d[1:0], h >= 11'd1048 && h < 11'd1184};
 	vs_d <= {vs_d[1:0], v >= 10'd771 && v < 10'd777};
