@@ -188,7 +188,12 @@ wire [15:0] joy_l16, joy_r16;
 wire [12:0] joy_l = joy_l16[12:0], joy_r = joy_r16[12:0];
 wire [7:0] ms_x, ms_b8;
 wire [2:0] ms_b = ms_b8[2:0];
-wire ms_upd;
+wire ms_wr;
+// the mouse report as the toggle of v1 (a2600_paddles takes a change of it; MS_WR of link v2 is a pulse)
+reg ms_upd = 1'b0;
+always @(posedge clk_sys)
+	if (ms_wr)
+		ms_upd <= ~ms_upd;
 wire [1:0] ld_kind;
 wire [7:0] ld_slot, ld_data;
 wire [31:0] ld_addr;
@@ -233,7 +238,7 @@ kg_mcu2 #(
 
 	.KBD({ kb_dat5, kb_dat4, kb_dat3, kb_dat2, kb_dat1, kb_dat0, kb_status }), .KBD_WR(),
 	.PS2_CODE(), .PS2_KIND(), .PS2_WR(),
-	.MS_X(ms_x), .MS_Y(), .MS_Z(), .MS_B(ms_b8), .MS_WR(ms_upd),
+	.MS_X(ms_x), .MS_Y(), .MS_Z(), .MS_B(ms_b8), .MS_WR(ms_wr),
 	.JOY_L(joy_l16), .JOY_R(joy_r16), .JOY_WR(),
 	.PS2_CMD(16'h0000), .PS2_CMD_WR(1'b0),
 
